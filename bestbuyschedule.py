@@ -1,3 +1,6 @@
+#Created by Ratheesh Mathew
+#For for BestBuy work Schedule
+
 import calendar
 from datetime import datetime
 import docx
@@ -78,11 +81,11 @@ def create_month_calendar(year, month):
 
 def main():
     try:
-        year = int(input("Enter year (e.g., 2025): "))
-        month = int(input("Enter month Number (1-12): "))
+        year = int(input("Enter the Year (e.g., 2025): "))
+        month = int(input("Enter Month Number (1-12) which you want to generate: "))
         if 1 <= month <= 12:
             filename = create_month_calendar(year, month)
-            print(f"Calendar saved as {filename}")
+            print(f"Calendar Saved as {filename}")
         else:
             print("Please enter a valid month (1-12)")
     except ValueError:
