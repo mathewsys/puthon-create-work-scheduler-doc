@@ -24,9 +24,10 @@ def create_month_calendar(year, month):
     
     doc.add_heading(f'{month_name} {year}', level=1)
     
-    # Create table
+    # Create table, 
     table = doc.add_table(rows=len(month_days)+1, cols=7)
     table.style = 'Table Grid'
+
     
     # Determine first day of the month (0=Sunday, 6=Saturday)
     first_day = datetime(year, month, 1).weekday()  # Convert to Sunday=0 base
@@ -78,7 +79,7 @@ def create_month_calendar(year, month):
 def main():
     try:
         year = int(input("Enter year (e.g., 2025): "))
-        month = int(input("Enter month number (1-12): "))
+        month = int(input("Enter month Number (1-12): "))
         if 1 <= month <= 12:
             filename = create_month_calendar(year, month)
             print(f"Calendar saved as {filename}")
