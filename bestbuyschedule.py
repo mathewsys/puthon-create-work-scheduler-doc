@@ -1,11 +1,13 @@
-#Created by Ratheesh Mathew
-#For for BestBuy work Schedule  
+# Created by Ratheesh Mathew
+# For BestBuy Work Schedule  
 
 import calendar
 from datetime import datetime
 import docx
 from docx import Document
 from docx.shared import Inches, Pt
+from docx.oxml import parse_xml
+from docx.oxml.ns import nsdecls
 
 def create_month_calendar(year, month):
     # Create a new Word document
@@ -27,16 +29,15 @@ def create_month_calendar(year, month):
     
     doc.add_heading(f'{month_name} {year}', level=1)
     
-    # Create table, 
-    table = doc.add_table(rows=len(month_days)+1, cols=7)
+    # Create table
+    table = doc.add_table(rows=len(month_days) + 1, cols=7)
     table.style = 'Table Grid'
-
     
-    # Determine first day of the month (0=Sunday, 6=Saturday)
-    first_day = datetime(year, month, 1).weekday()  # Convert to Sunday=0 base
-    first_day = (first_day + 1) % 7  # Shift: Mon=0 -> Sun=0
+    # Determine first day of the month
+    first_day = datetime(year, month, 1).weekday()
+    first_day = (first_day + 1) % 7  # Adjust to make Sunday=0
     
-    # Set column headers with correct month abbreviation
+    # Set column headers
     days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
     header_cells = table.rows[0].cells
     for i, day in enumerate(days):
@@ -44,24 +45,40 @@ def create_month_calendar(year, month):
             header_cells[i].text = f"{prev_month_abbr}-{day}"
         else:  # Days of current month
             header_cells[i].text = f"{month_abbr}-{day}"
+        
+        # Apply background color to header row
+        shading_elm = parse_xml(r'<w:shd {} w:fill="D3D3D3"/>'.format(nsdecls('w')))
+        header_cells[i]._tc.get_or_add_tcPr().append(shading_elm)
     
-    # Fill in the dates
+    # Reduce first row height
+    table.rows[0].height = Inches(0.25)
+    
     prev_cal = calendar.Calendar(firstweekday=calendar.SUNDAY)
     prev_month_days = prev_cal.monthdayscalendar(prev_year, prev_month)
     
     for week_num, week in enumerate(month_days, 1):
         for day_num, day in enumerate(week):
             cell = table.rows[week_num].cells[day_num]
+            paragraph = cell.paragraphs[0]
+            
             if day == 0 and week_num == 1:  # Previous month's days
                 prev_week = prev_month_days[-1]
-                cell.text = f"{prev_month_abbr}-{prev_week[day_num]}"
+                paragraph.add_run(f"{prev_month_abbr}-{prev_week[day_num]}\n")
+                shading_elm = parse_xml(r'<w:shd {} w:fill="D3D3D3"/>'.format(nsdecls('w')))
+                cell._tc.get_or_add_tcPr().append(shading_elm)
             elif day == 0 and week_num == len(month_days):  # Next month's days
                 next_day = day_num + 1 - sum(1 for d in week if d != 0)
-                cell.text = f"{next_month_abbr}-{next_day}"
+                paragraph.add_run(f"{next_month_abbr}-{next_day}\n")
+                shading_elm = parse_xml(r'<w:shd {} w:fill="D3D3D3"/>'.format(nsdecls('w')))
+                cell._tc.get_or_add_tcPr().append(shading_elm)
             else:  # Current month's days
-                cell.text = f"{month_abbr}-{day}"
+                paragraph.add_run(f"{month_abbr}-{day}\n")
+            
+            # Add two text sections for work schedule
+            paragraph.add_run("____:____\n")
+            paragraph.add_run("____:____")
     
-    # Set font properties for all cells
+    # Set font properties
     for row in table.rows:
         for cell in row.cells:
             for paragraph in cell.paragraphs:
@@ -70,11 +87,11 @@ def create_month_calendar(year, month):
                     run.font.size = Pt(9.5)
                     run.bold = True
     
-    # Set row height to 0.5 inches
-    for row in table.rows:
+    # Set row height (except first row)
+    for row in table.rows[1:]:
         row.height = Inches(0.5)
     
-    # Save the document
+    # Save document
     filename = f"BBYCAL_{month_name}_{year}.docx"
     doc.save(filename)
     return filename
